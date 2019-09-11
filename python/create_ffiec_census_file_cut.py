@@ -34,6 +34,7 @@ census_delineation_url = "https://www2.census.gov/programs-surveys/metro-micro/g
 
 
 #Download Census delineation file to get MSA/MD names
+print("downloading Census and FFIEC Census data, this can take a while")
 urllib.request.urlretrieve(census_delineation_url, "../data/census_delineation.xls")
 
 data_xls = pd.read_excel('../data/census_delineation.xls', 'List 1', index_col=None)
