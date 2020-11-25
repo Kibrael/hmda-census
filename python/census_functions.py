@@ -533,18 +533,12 @@ class CensusTools(object):
 			conn.close()
 
 
-	def load_to_db_expert(self, data_file=None, table="ffiec_census_{year}", schema="census", years=[],
-						  encoding="latin1", params=None, header="", quote="", file_ending="txt", 
-						  file_format="CSV", 
-						  sep="|"):
+	def load_to_db_expert(self, schema="census", years=[], encoding="latin1", params=None, header="", 
+						  quote="", file_ending="txt", file_format="CSV", sep="|"):
 		"""
 		Uses the Psycopg2 library copy expert function to read a data stream from STDIN and copy it to a 
 		remote DB table.
 
-		creat_sql: SQL script used to create the table
-		data_file: relative path the data file to load to the table. 
-			If None, ffiec_census_msamd_names_{year}.csv will be used from the config out_path
-		table: the target table for the data
 		schema: the target schema containing the target table
 		encoding: the data_file encoding
 		params: DB connection parameters
@@ -552,15 +546,24 @@ class CensusTools(object):
 		quote: quote character to use
 		file_ending: the last 3 characters of the data file used, usually TXT or CSV.
 		file_format: tells the DB engine what file format is being used, should be CSV
+		sep: the delimiter character in the data file
 		"""
 		if len(years) < 1:
 			print("no years passed in list, using config data for ALL YEARS")
 			years = self.config_data["ALL_YEARS"]
+			if self.config_data["DEBUG"]:
+				print("years pulled from config:")
+				print(years)
+				print()
 
 		if params is None:
 			params = self.db_params
 
 		for year in years:
+			print("*"*50)
+			print("\n\n")
+			print("loading Census data for {year}".format(year=year))
+			print()
 			with open(self.config_data["census_create_table_sql"]) as in_sql:
 				create_census_table_sql = in_sql.read()
 
@@ -577,14 +580,18 @@ class CensusTools(object):
 			sql_def_lines = ",\n".join(sql_def_lines)
 
 			#set table and data reference for year
-			table = table.format(year=year)
 
-			if data_file is None:
-				data_file = self.config_data["OUT_PATH"] + "ffiec_census_msamd_names_{year}.{txt_or_csv}".format(year=year, txt_or_csv=file_ending)
-				data_file = os.path.abspath(data_file)
-			else:
-				data_file = os.path.abspath(data_file) #convert to absolute path from relative
 
+			table = self.config_data["base_db_table_name"].format(year=year)
+			if self.config_data["DEBUG"]:
+				print()
+				print("census table name", table)
+				print()
+
+
+			data_file = self.config_data["OUT_PATH"] + self.config_data["base_data_file_name"].format(year=year, txt_or_csv=file_ending)
+			data_file = os.path.abspath(data_file)
+			
 			sql = """COPY {schema}.{table} FROM STDIN  DELIMITER '{sep}' {header} {format} {quote} ;""".format(schema=schema, 
 				table=table, sep=sep, header=header, format=file_format, quote=quote)
 			
