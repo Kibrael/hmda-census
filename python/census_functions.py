@@ -538,7 +538,9 @@ class CensusTools(object):
 		"""
 		Uses the Psycopg2 library copy expert function to read a data stream from STDIN and copy it to a 
 		remote DB table.
-
+		
+		Note: the MSA MD name files prior to 2003 have not been parsed yet, so this function only works for 
+			2003 and later.
 		schema: the target schema containing the target table
 		encoding: the data_file encoding
 		params: DB connection parameters
@@ -580,14 +582,11 @@ class CensusTools(object):
 			sql_def_lines = ",\n".join(sql_def_lines)
 
 			#set table and data reference for year
-
-
 			table = self.config_data["base_db_table_name"].format(year=year)
 			if self.config_data["DEBUG"]:
 				print()
 				print("census table name", table)
 				print()
-
 
 			data_file = self.config_data["OUT_PATH"] + self.config_data["base_data_file_name"].format(year=year, txt_or_csv=file_ending)
 			data_file = os.path.abspath(data_file)
